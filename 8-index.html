@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>still</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#050505; --fg:#e8e8e6; --dim:#6a6a66; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:var(--bg); color:var(--fg);
+    font-family:'Fraunces',Georgia,serif;
+    overflow:hidden; overscroll-behavior:none; user-select:none; -webkit-user-select:none; }
+  body { display:flex; align-items:center; justify-content:center; }
+
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom); }
+
+  /* ---- home ---- */
+  .wordmark { font-size:15px; letter-spacing:.35em; color:var(--dim); text-transform:lowercase;
+    margin-bottom:64px; }
+  .pick { width:100%; max-width:300px; }
+  .pick .label { font-size:11px; letter-spacing:.25em; color:var(--dim); text-transform:lowercase;
+    margin:0 0 14px 4px; }
+  .row { display:flex; gap:10px; margin-bottom:44px; }
+  .opt { flex:1; background:none; border:1px solid #1d1d1b; border-radius:14px; color:var(--dim);
+    padding:14px 6px; font-size:13px; letter-spacing:.06em; text-align:center; cursor:pointer;
+    transition:border-color .25s, color .25s; font-family:inherit; }
+  .opt .sub { display:block; font-size:10px; letter-spacing:.12em; color:#4a4a46; margin-top:5px; }
+  .opt.sel { border-color:#3f3f3a; color:var(--fg); }
+  .opt.sel .sub { color:var(--dim); }
+  .begin { background:none; border:none; color:var(--fg); font-size:15px; letter-spacing:.35em;
+    text-transform:lowercase; cursor:pointer; padding:18px 40px; font-family:inherit; }
+  .begin:active { opacity:.5; }
+
+  /* ---- session ---- */
+  #sess { justify-content:center; }
+  .stage { position:relative; width:min(78vw,340px); height:min(78vw,340px);
+    display:flex; align-items:center; justify-content:center; }
+  .ring { position:absolute; inset:0; border-radius:50%; border:1px solid #33332f;
+    transform:scale(.38); will-change:transform; }
+  .glow { position:absolute; inset:0; border-radius:50%; transform:scale(.38); will-change:transform,opacity;
+    background:radial-gradient(circle, rgba(232,232,230,.10) 0%, rgba(232,232,230,.03) 55%, transparent 72%); }
+  .core { width:9px; height:9px; border-radius:50%; background:var(--fg); }
+  .phase { position:absolute; left:0; right:0; text-align:center; top:calc(100% + 46px);
+    font-size:13px; letter-spacing:.4em; text-transform:lowercase; color:var(--dim); }
+  .meta { position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 34px);
+    text-align:center; font-size:11px; letter-spacing:.2em; color:#4a4a46; }
+  .endtap { position:absolute; top:calc(env(safe-area-inset-top) + 22px); right:24px;
+    background:none; border:none; color:#4a4a46; font-size:13px; letter-spacing:.2em; cursor:pointer; font-family:inherit; }
+
+  /* ---- done ---- */
+  .doneWord { font-size:15px; letter-spacing:.35em; color:var(--fg); text-transform:lowercase; margin-bottom:26px; }
+  .doneStat { font-size:12px; letter-spacing:.2em; color:var(--dim); margin-bottom:80px; }
+
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+
+<!-- home -->
+<div class="screen" id="home">
+  <div class="wordmark">still</div>
+  <div class="pick">
+    <div class="label">pattern</div>
+    <div class="row" id="patterns">
+      <button class="opt sel" data-p="sigh">sigh<span class="sub">fastest calm</span></button>
+      <button class="opt" data-p="478">4-7-8<span class="sub">deep slow</span></button>
+      <button class="opt" data-p="box">box<span class="sub">steady</span></button>
+    </div>
+    <div class="label">minutes</div>
+    <div class="row" id="durs">
+      <button class="opt" data-d="60">1</button>
+      <button class="opt sel" data-d="180">3</button>
+      <button class="opt" data-d="300">5</button>
+    </div>
+  </div>
+  <button class="begin" id="begin">begin</button>
+</div>
+
+<!-- session -->
+<div class="screen" id="sess" hidden>
+  <button class="endtap" id="endEarly">end</button>
+  <div class="stage">
+    <div class="glow" id="glow"></div>
+    <div class="ring" id="ring"></div>
+    <div class="core"></div>
+    <div class="phase" id="phase"></div>
+  </div>
+  <div class="meta" id="meta"></div>
+</div>
+
+<!-- done -->
+<div class="screen" id="done" hidden>
+  <div class="doneWord">still</div>
+  <div class="doneStat" id="doneStat"></div>
+  <button class="begin" id="again">again</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MIN = .38, MAX = 1.0;
+  // phases: [label, seconds, fromScale, toScale, vibratePattern]
+  var PATTERNS = {
+    sigh: { // physiological sigh: double inhale, long exhale (Huberman/Spiegel cyclic sighing)
+      phases: [
+        ["in",   2.0, MIN, (MIN+MAX)*.62, [35]],
+        ["in",   1.2, (MIN+MAX)*.62, MAX,  [35]],
+        ["out",  6.0, MAX, MIN,  [70]]
+      ]},
+    "478": { // 4-7-8 (Weil): long exhale activates parasympathetic
+      phases: [
+        ["in",   4, MIN, MAX, [35]],
+        ["hold", 7, MAX, MAX, [20,60,20]],
+        ["out",  8, MAX, MIN, [70]]
+      ]},
+    box: { // box breathing: even 4s sides
+      phases: [
+        ["in",   4, MIN, MAX, [35]],
+        ["hold", 4, MAX, MAX, [20,60,20]],
+        ["out",  4, MAX, MIN, [70]],
+        ["hold", 4, MIN, MIN, [20,60,20]]
+      ]}
+  };
+
+  var home = document.getElementById("home"),
+      sess = document.getElementById("sess"),
+      done = document.getElementById("done"),
+      ring = document.getElementById("ring"),
+      glow = document.getElementById("glow"),
+      phaseEl = document.getElementById("phase"),
+      meta = document.getElementById("meta"),
+      doneStat = document.getElementById("doneStat");
+
+  var patKey = "sigh", durSec = 180;
+  var running = false, raf = null, wakeLock = null;
+  var sessStart = 0, phaseStart = 0, phaseIdx = 0, breaths = 0, phases = [];
+
+  function buzz(p){ try { if (navigator.vibrate) navigator.vibrate(p); } catch(e){} }
+
+  function pick(groupSel, attr, cb){
+    var g = document.getElementById(groupSel);
+    g.addEventListener("click", function(e){
+      var b = e.target.closest(".opt"); if(!b) return;
+      g.querySelectorAll(".opt").forEach(function(o){ o.classList.remove("sel"); });
+      b.classList.add("sel"); cb(b.getAttribute(attr)); buzz(12);
+    });
+  }
+  pick("patterns","data-p",function(v){ patKey = v; });
+  pick("durs","data-d",function(v){ durSec = +v; });
+
+  function show(el){ home.hidden = sess.hidden = done.hidden = true; el.hidden = false; }
+
+  function ease(t){ return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; } // easeInOutQuad
+
+  function setPhase(i){
+    phaseIdx = i;
+    var ph = phases[i];
+    phaseEl.textContent = ph[0];
+    phaseStart = performance.now();
+    buzz(ph[4]);
+    if (i === 0) breaths++;
+  }
+
+  function frame(now){
+    if (!running) return;
+    var elapsed = (now - sessStart)/1000;
+    if (elapsed >= durSec) return finish(false);
+    var ph = phases[phaseIdx];
+    var t = (now - phaseStart)/1000;
+    if (t >= ph[1]) {
+      var next = (phaseIdx+1) % phases.length;
+      // if session ends mid-next-phase it's fine; finish check above catches it
+      setPhase(next);
+      ph = phases[phaseIdx]; t = 0;
+    }
+    var p = ease(Math.min(t/ph[1],1));
+    var s = ph[2] + (ph[3]-ph[2])*p;
+    ring.style.transform = "scale("+s.toFixed(4)+")";
+    glow.style.transform = "scale("+s.toFixed(4)+")";
+    glow.style.opacity = (0.5 + 0.5*s).toFixed(3);
+    var left = Math.max(0, durSec - elapsed);
+    meta.textContent = Math.floor(left/60) + ":" + ("0"+Math.floor(left%60)).slice(-2) + "  ·  " + breaths + (breaths===1?" breath":" breaths");
+    raf = requestAnimationFrame(frame);
+  }
+
+  function start(){
+    phases = PATTERNS[patKey].phases;
+    breaths = 0; running = true;
+    sessStart = performance.now();
+    show(sess);
+    setPhase(0);
+    raf = requestAnimationFrame(frame);
+    if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function(w){ wakeLock = w; }).catch(function(){});
+  }
+
+  function finish(early){
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+    buzz([40,80,40]);
+    if (wakeLock) { wakeLock.release().catch(function(){}); wakeLock = null; }
+    var mins = Math.max(1, Math.round((performance.now()-sessStart)/60000));
+    doneStat.textContent = early ? "ended early · " + breaths + " breaths" : mins + (mins===1?" minute":" minutes") + " · " + breaths + " breaths";
+    show(done);
+  }
+
+  document.getElementById("begin").addEventListener("click", start);
+  document.getElementById("endEarly").addEventListener("click", function(){ finish(true); });
+  document.getElementById("again").addEventListener("click", function(){ show(home); });
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+})();
+</script>
+</body>
+</html>
